@@ -1,7 +1,8 @@
 import streamlit as st
 import openai
+import os
 
-openai.api_key = "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"
+openai.api_key = os.getenv("OPENAI_API_KEY")
 
 
 # Set page title and favicon
@@ -30,9 +31,9 @@ st.markdown(
 
 # User inputs
 st.title("Food Recipe Generator")
-age = st.number_input("Enter your age", min_value=1, step=1)
-height = st.number_input("Enter your height (in centimeters)", min_value=1, step=1)
-weight = st.number_input("Enter your weight (in kilograms)", min_value=1, step=1)
+age = st.number_input("Enter your age", min_value=18, step=1)
+height = st.number_input("Enter your height (in centimeters)", min_value=100, step=1)
+weight = st.number_input("Enter your weight (in kilograms)", min_value=35, step=1)
 fitness_goals_options = ["Weight Loss", "Muscle Gain", "Maintaining Weight", "Other"]
 selected_fitness_goal = st.selectbox("Select your fitness goal", fitness_goals_options)
 food_preference_options = ["Halal", "Hindu", "Kosher", "Jain", "Vegetarian", "Vegan", "Gluten-free"]  # Add more options as needed
