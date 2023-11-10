@@ -1,9 +1,25 @@
 import streamlit as st
 import openai
 import os
+import requests
 
 openai.api_key = os.getenv("OPENAI_API_KEY")
+UNSPLASH_ACCESS_KEY = os.getenv("UNSPLASH_ACCESS_KEY")
 
+def get_recipe_images(recipes):
+    img_urls = []
+    dish_names = [recipe.split('\n')[0] for recipe in recipes]
+    print(recipes)
+    for dish_name in dish_names:
+        # Replace YOUR_UNSPLASH_ACCESS_KEY with your Unsplash access key
+        print("Dish Name\n", dish_name, "Dish Name\n")
+        url = f"https://api.unsplash.com/photos/random?query={dish_name}&client_id={UNSPLASH_ACCESS_KEY}"
+        response = requests.get(url)
+        if response.status_code == 200:
+            img_data = response.json()
+            if img_data and 'urls' in img_data:
+                img_urls.append(img_data['urls']['regular'])
+    return img_urls
 
 # Set page title and favicon
 st.set_page_config(
@@ -32,16 +48,16 @@ st.markdown(
 # User inputs
 st.title("Food Recipe Generator")
 age = st.number_input("Enter your age", min_value=18, step=1)
-height = st.number_input("Enter your height (in centimeters)", min_value=100, step=1)
-weight = st.number_input("Enter your weight (in kilograms)", min_value=35, step=1)
+height = st.number_input("Enter your height (in centimeters)", min_value=120, step=1)
+weight = st.number_input("Enter your weight (in kilograms)", min_value=55, step=1)
 fitness_goals_options = ["Weight Loss", "Muscle Gain", "Maintaining Weight", "Other"]
 selected_fitness_goal = st.selectbox("Select your fitness goal", fitness_goals_options)
-food_preference_options = ["Halal", "Hindu", "Kosher", "Jain", "Vegetarian", "Vegan", "Gluten-free"]  # Add more options as needed
-selected_food_preference = st.selectbox("Select food preference", food_preference_options)
-cuisine_type_options = ["Italian", "Asian", "Mexican", "Mediterranean", "Other"]
+protein_preference_options = [ "Vegetarian", "Chicken", "Fish", "Shrimp", "Vegan", "Pork", "Mutton", "Beef"]  # Add more options as needed
+selected_protein_preference = st.selectbox("Select food preference", protein_preference_options)
+cuisine_type_options = ["Indian", "Italian", "Asian", "Mexican", "Mediterranean", "Other"]
 cuisine_type = st.selectbox("Select preferred cuisine type", cuisine_type_options)
 
-dietary_restrictions_options = ["Low-carb", "Nut-free", "Vegan", "Vegetarian", "Other"]
+dietary_restrictions_options = ["Low-carb", "Nut-free", "Vegan", "Vegetarian", ""]
 dietary_restrictions = st.selectbox("Select dietary restrictions or preferences", dietary_restrictions_options)
 
 # Number of recipes to generate
@@ -57,14 +73,15 @@ if st.button("Generate Recipes"):
             prompt += f" with a goal of {selected_fitness_goal.lower()}"
         if height and weight:
             prompt += f", {height} cm tall, and {weight} kg in weight"
-        if selected_food_preference:
-            prompt += f" that is {selected_food_preference.lower()}"
+        if selected_protein_preference:
+            prompt += f" that is {selected_protein_preference.lower()}"
         if cuisine_type:
             prompt += f" and has a {cuisine_type.lower()} influence"
         if dietary_restrictions:
             prompt += f" while being {dietary_restrictions.lower()}"
-        prompt += "."
+        prompt += ". Also, provide the nutritional information."
         
+        print(prompt)
         # Make a request to the OpenAI API
         response = openai.Completion.create(
             engine="text-davinci-003",
@@ -77,5 +94,6 @@ if st.button("Generate Recipes"):
         recipes.append(recipe)
     
     # Display the generated recipes
-    for idx, recipe in enumerate(recipes, start=1):
+    for idx, (recipe, img_url) in enumerate(zip(recipes, get_recipe_images(recipes)), start=1):
         st.markdown(f"**Recipe {idx}:** {recipe}")
+        st.image(img_url, caption=f"Image for Recipe {idx}", width=300)
